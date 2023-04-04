@@ -7,6 +7,7 @@ from PIL import Image
 import torch
 import torchvision
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
@@ -65,15 +66,27 @@ class Discriminator(nn.Module):
 def train(args, dataloader, generator, discriminator, optimizer_G, optimizer_D, device):
     for epoch in range(args.num_epochs):
         for i, data in enumerate(tqdm(dataloader, desc=f"Epoch {epoch}")):
+            # Generate fake images and load reals
             real_images = data[0].to(device)
+            noise = torch.randn(real_images.size(0), args.nz, 1, 1, device=device)
+            fake_images = generator(noise).detach()
+
+            # Check for tensor size mismatches and adjust the tensors accordingly
+            # if real_images.shape != fake_images.shape:
+            #     new_size = min(real_images.shape[2], fake_images.shape[2])
+            #     real_images = F.interpolate(real_images, size=new_size)
+            #     fake_images = F.interpolate(fake_images, size=new_size)
+
+            # Resize images to fixed size
+            real_images = F.interpolate(real_images, size=args.image_size, mode='bilinear', align_corners=False)
+            fake_images = F.interpolate(fake_images, size=args.image_size, mode='bilinear', align_corners=False)
 
 
             # Train the discriminator with real images
             discriminator.zero_grad()
             output_real = discriminator(real_images)
-                        # Generate fake images and train the discriminator with them
-            noise = torch.randn(real_images.size(0), args.nz, 1, 1, device=device)
-            fake_images = generator(noise).detach()
+
+            # train the discriminator with them
             output_fake = discriminator(fake_images)
             loss_D = -torch.mean(torch.log(output_real) + torch.log(1 - output_fake))
             loss_D.backward()
@@ -154,3 +167,6 @@ if __name__ == '__main__':
 
     # Train the GAN
     train(args, dataloader, generator, discriminator, optimizer_G, optimizer_D, device)
+
+           
+
