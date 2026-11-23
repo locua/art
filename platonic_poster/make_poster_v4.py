@@ -235,13 +235,13 @@ def render_svg(dots, lines, lw, paper="#ffffff", ink="#000000"):
 '''
 
 
-def render_pdf(path, dots, lines, lw, paper="#ffffff", ink="#000000"):
+def render_pdf(path, dots, lines, lw, paper="#ffffff", ink="#000000", title="Inscribed"):
     from reportlab.lib.colors import HexColor
     from reportlab.lib.units import mm
     from reportlab.pdfgen import canvas
     X, Y, Ar, At, Ang = dots
     c = canvas.Canvas(path, pagesize=(A2_W * mm, A2_H * mm))
-    c.setTitle("Inscribed")
+    c.setTitle(title)
     c.setFillColor(HexColor(paper))
     c.rect(0, 0, A2_W * mm, A2_H * mm, stroke=0, fill=1)
 

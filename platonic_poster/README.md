@@ -172,3 +172,46 @@ the solids float in front of the globe.
 Options: `--palette` (cage, ember-white, ember, cyan-white, spectrum),
 `--magnify`, `--profile` (lens shape), `--lens`, `--size`, `--vignette` and
 `--view`.
+
+---
+
+## v5 "Nested Necker": cubes only, nested and interlocking
+
+`python make_poster_v5.py` writes to `output/v5/`. It uses the same dot globe as
+v4, but every figure is a cube: seven of them, at three sizes, in an exact chain
+that alternates between two structures:
+
+```
+C(1)  ⊃  K(1/√2)  ⊃  C(1/2)          (each step scaled by 1/√2)
+```
+
+* **C, Escher's compound.** Three equal cubes, each turned 45° about a
+  different axis (x, y or z), passing through one another. This is the solid
+  on the towers in M.C. Escher's *Waterfall*.
+* **K, the kernel.** One axis-aligned cube, the largest that fits inside the
+  compound. Each of its 8 corners touches a face of **all three** surrounding
+  cubes at once.
+* **The next compound** is half the size and fits exactly inside the kernel:
+  every one of its 24 corners lands on a kernel face.
+
+So the cubes interlock within each compound and touch exactly between levels.
+`verify()` asserts every one of these contacts each time the poster is
+generated.
+
+**Colour.** The three cubes of each compound are coloured by their turning
+axis in the print primaries cyan, magenta and yellow, and the same three
+colours recur at half size, so the self-similarity reads at a glance. The
+kernel cube is paper-white: it shows only as cuts through the dots, so it reads
+as an illusory Necker cube floating in front of the sheet, like the original
+Bradley & Petry figure.
+
+**View.** The camera looks down on the nest from 15–35° above the horizon,
+with one axis upright, as Escher drew it. The yellow cube's vertical edges
+anchor the figure. Within that range the search maximises the clearance
+between corners and unrelated edges, keeps 12° away from every symmetry axis,
+and keeps every face at least 8° from edge-on. Every cube is an exact
+orthographic wireframe, so each one flips independently.
+
+`--depth 4` adds the next, tiny white kernel inside. It's tighter: the minimum
+clearance drops from 0.026 to 0.016. `--palette layers` colours by level
+instead (cyan, white, magenta).
