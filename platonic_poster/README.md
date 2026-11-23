@@ -37,3 +37,33 @@ python make_poster.py --dot 0.65 --line 0.08           # smaller dots, thinner l
 Print note: the screen cyan `#00d2ff` is close to process cyan. For maximum
 punch, ask the printer for a fluorescent or spot colour. You can also choose a
 colour that sits inside the CMYK gamut, such as `#00aeef`, `#ec008c` or `#ffed00`.
+
+---
+
+## v2: bigger dots, bolder lines, views chosen for the illusion
+
+`python make_poster_v2.py` writes to `output/v2/`.
+
+* **36 × 51 dots** (v1 had 44 × 62). The dots are 80 % of the spacing and the
+  lines are 16 % of the spacing, about 70 % thicker than v1.
+* **Each row is one solid turning.** From top to bottom the rows are the
+  tetrahedron, cube, octahedron, icosahedron and dodecahedron (4, 6, 8, 12 and
+  20 faces). Each row shows three views of the solid about 20° apart, turning
+  about a shared axis that tilts slightly toward the viewer. Reading along the
+  row gives a sense of one object spinning, and alternate rows spin in opposite
+  directions. Every view is also a Necker-style ambiguous figure, so the
+  apparent direction of spin can flip while you look.
+* **The angles are chosen to make the illusion stronger.** The search in
+  `solids_v2.py` scores each view and keeps only the good ones:
+  * **No flat views.** Views within 8° of any symmetry axis are rejected, and
+    views within 16° are penalised. Seen down those axes, a solid collapses
+    into a flat pattern, such as a square with an X or a hexagon.
+  * **Clear junctions in the dots.** The edges meeting at a corner must be well
+    spread, so each corner dot shows a crisp Y or arrow. Those junctions are the
+    strongest cue that makes the shape pop out in 3D.
+  * **No false junctions.** No edge may pass near a corner it isn't part of,
+    and corners must sit well apart.
+  * **Little distortion.** Every corner still lands exactly on a dot centre.
+
+Options: `--step` (degrees per frame), `--frames`, `--cols`, `--dot`, `--line`,
+`--colour` and `--seed`.
