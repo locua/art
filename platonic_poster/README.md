@@ -109,3 +109,14 @@ chooses them to:
 * **Keep the turning rows.** Each frame is an exact 3D rotation of the solid,
   about 20° from the previous frame. A frame may move up to ±5° from its ideal
   angle so it can avoid an accidental alignment.
+
+### v3 variation: Necker cubes only
+
+```bash
+python make_poster_v3.py --only cube --frames 4 --rows 6 --extent 6.5 \
+    --out output/v3_cubes/necker_cubes_A2
+```
+
+This makes 24 exact regular cubes in 6 rows of 4. Each row is one cube turning
+in about 20° steps, and alternate rows turn in opposite directions. `--only`
+works with any solid, for example `--only dodecahedron --rows 5 --frames 3`.

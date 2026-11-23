@@ -13,6 +13,7 @@ projection is orthographic, each frame is also depth-ambiguous (Necker
 reversal), so the apparent direction of spin can flip as you watch.
 
   python make_poster_v3.py
+  python make_poster_v3.py --only cube --frames 4 --rows 6 --out output/v3_cubes/necker_cubes_A2
   python make_poster_v3.py --colour "#ff2bd6" --seed 4 --out output/v3/magenta
 """
 import argparse
@@ -56,7 +57,15 @@ def main():
     ap.add_argument("--dpi", type=int, default=300)
     ap.add_argument("--out", default="output/v3/platonic_poster_v3_A2")
     ap.add_argument("--no-png", action="store_true")
+    ap.add_argument("--only", choices=[r[0] for r in ROWS],
+                    help="use a single solid for every row (e.g. --only cube)")
+    ap.add_argument("--rows", type=int, default=6, help="number of rows with --only")
+    ap.add_argument("--extent", type=float, help="solid size in dots with --only")
     args = ap.parse_args()
+    rows_spec = ROWS
+    if args.only:
+        base_ext = dict((n, e) for n, e, _ in ROWS)[args.only]
+        rows_spec = [(args.only, args.extent or base_ext, 1)] * args.rows
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
 
     cols = args.cols
@@ -64,13 +73,13 @@ def main():
     rows = int(A2_H / pitch) - 1
     ox, oy = pitch, (A2_H - (rows - 1) * pitch) / 2
 
-    heights = np.array([h for _, _, h in ROWS], float)
+    heights = np.array([h for _, _, h in rows_spec], float)
     heights *= rows / heights.sum()
     tops = np.concatenate([[0], np.cumsum(heights)[:-1]])
 
     rng = np.random.default_rng(args.seed)
     jobs = [(name, ext, args.frames, args.step, 1 if r % 2 == 0 else -1,
-             int(rng.integers(1 << 31))) for r, (name, ext, _) in enumerate(ROWS)]
+             int(rng.integers(1 << 31))) for r, (name, ext, _) in enumerate(rows_spec)]
     with Pool() as pool:
         seqs = pool.map(_solve, jobs)
 
