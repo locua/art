@@ -81,3 +81,31 @@ colour that sits inside the CMYK gamut, such as `#00aeef`, `#ec008c` or `#ffed00
 
 Options: `--step` (degrees per frame), `--frames`, `--cols`, `--dot`, `--line`,
 `--colour` and `--seed`.
+
+---
+
+## v3: geometrically exact solids, tuned for the Necker effect
+
+`python make_poster_v3.py` writes to `output/v3/`. It uses the same dots, lines
+and row layout as v2.
+
+Necker-type depth reversal depends on the drawing being a *perfect* parallel
+projection: no perspective and no warping, with every edge drawn. In v3 every
+solid is an exact orthographic projection of the regular solid. The script
+checks this, and the largest mismatch between edges that should be parallel
+is about 1e-15, which is floating-point noise.
+
+To make this possible, corners are no longer forced onto dot centres. The only
+freedom is each solid's rotation, size and position, and `solids_v3.py`
+chooses them to:
+
+* **Land as many corners as possible near a dot centre,** so the junction shows
+  inside the hole. The tetrahedron, cube and octahedron get most or all of their
+  corners inside dots. The icosahedron gets 50–85 % and the dodecahedron
+  60–70 %, and your eye fills in the rest across the white.
+* **Keep the views generic and clean**, using the same rules as v2: no flat
+  views close to a symmetry axis, wide-angled junctions, and no edge passing
+  near a corner it doesn't belong to.
+* **Keep the turning rows.** Each frame is an exact 3D rotation of the solid,
+  about 20° from the previous frame. A frame may move up to ±5° from its ideal
+  angle so it can avoid an accidental alignment.

@@ -110,8 +110,8 @@ class ViewScorer:
             return np.inf
         return max(0.0, (16 - ang) / 8) ** 2
 
-    def cost(self, proj, view_dir=None):
-        S = np.round(proj)
+    def cost(self, proj, view_dir=None, snap=True):
+        S = np.round(proj) if snap else np.asarray(proj, float)
         d = np.linalg.norm(S[:, None] - S[None], axis=-1)[self.iu]
         if d.min() < self.min_gap - 1e-9:
             return np.inf, S
@@ -229,3 +229,8 @@ def rotation_sequence(name, extent, frames, step_deg, direction, rng,
         out.append(dict(points=pts, edges=sc.edges, cost=c, name=name,
                         angle=np.degrees(k * step + delta)))
     return out
+
+
+def _small_rotation_like(rng, sigma):
+    axis = rng.normal(size=3)
+    return axis_rotation(axis, rng.normal() * sigma)
