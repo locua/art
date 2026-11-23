@@ -63,7 +63,21 @@ colour that sits inside the CMYK gamut, such as `#00aeef`, `#ec008c` or `#ffed00
     strongest cue that makes the shape pop out in 3D.
   * **No false junctions.** No edge may pass near a corner it isn't part of,
     and corners must sit well apart.
-  * **Little distortion.** Every corner still lands exactly on a dot centre.
+  * **No warping.** Every corner still lands exactly on a dot centre, and edges
+    that are parallel on the real solid stay exactly parallel and equal on the
+    poster:
+    * For the **cube, tetrahedron and octahedron**, the script snaps the three
+      projected cube-edge directions to the grid, rather than each corner
+      separately. Every corner is then a whole-number sum of those directions,
+      so the drawing is an exact parallel projection of the regular solid
+      (Pohlke's theorem). It is very slightly oblique, the same way the classic
+      Necker cube drawing is.
+    * For the **icosahedron and dodecahedron**, each solid's centre is fixed on
+      a dot or exactly halfway between dots. These solids are symmetric through
+      their centre, so opposite corners snap symmetrically and every pair of
+      parallel edges stays parallel.
+    * The script prints a `parallel-edge error` for every solid, and it is 0
+      for all of them.
 
 Options: `--step` (degrees per frame), `--frames`, `--cols`, `--dot`, `--line`,
 `--colour` and `--seed`.

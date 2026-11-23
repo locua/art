@@ -5,6 +5,42 @@ import numpy as np
 
 from solids import solid, random_rotation
 
+# Solids whose vertices are integer combinations of a cube's three edge
+# vectors. For these we snap the three projected edge vectors (the basis)
+# to the grid instead of each vertex, so every vertex is an integer sum of
+# integer vectors: parallel edges stay exactly parallel and equal length.
+# By Pohlke's theorem the result is an exact parallel projection of the
+# *regular* solid -- no warping, only a slight obliqueness of view.
+BASIS_SOLIDS = ("tetrahedron", "cube", "octahedron")
+
+
+def basis_vertices(name):
+    v, edges = solid(name)
+    raw = np.round(v / np.abs(v).max()).astype(int)     # entries in {-1,0,1}
+    if name in ("cube", "tetrahedron"):
+        raw = (raw + 1) // 2                            # unit-cube corners
+    return raw.astype(float), edges
+
+
+def regularity(points, edges, name):
+    """Largest mismatch (in grid steps) between any two drawn edges that are
+    parallel and equal on the real 3D solid. 0 = perfectly consistent."""
+    v, _ = solid(name)
+    groups = {}
+    for a, b in edges:
+        d3 = v[b] - v[a]
+        key = tuple(np.round(d3 / np.linalg.norm(d3), 6))
+        neg = tuple(np.round(-d3 / np.linalg.norm(d3), 6))
+        if neg in groups:
+            groups[neg].append(points[a] - points[b])
+        else:
+            groups.setdefault(key, []).append(points[b] - points[a])
+    worst = 0.0
+    for vecs in groups.values():
+        vecs = np.array(vecs, float)
+        worst = max(worst, np.abs(vecs - vecs[0]).max())
+    return worst
+
 
 def axis_rotation(axis, ang):
     axis = np.asarray(axis, float)
@@ -109,13 +145,24 @@ def rotation_sequence(name, extent, frames, step_deg, direction, rng,
     """
     hard = {"icosahedron": 12, "dodecahedron": 13}.get(name, 16)
     sc = ViewScorer(name, edge_clear=0.45, hard_angle=hard)
-    v = sc.v
+    use_basis = name in BASIS_SOLIDS
+    v = basis_vertices(name)[0] if use_basis else sc.v
     step = np.radians(step_deg) * direction
 
     def frame_cost(R0, axis, k, delta, s, off):
         R = axis_rotation(axis, k * step + delta) @ R0
-        p = (v @ R.T)[:, :2] * s + off
-        c, S = sc.cost(p, view_dir=R[2])
+        if use_basis:
+            M = R[:2] * s                      # true orthographic basis
+            B = np.round(M)                    # snapped basis -> exact parallel proj.
+            p = v @ B.T
+            c, S = sc.cost(p, view_dir=R[2])
+            c += 1.5 * ((M - B) ** 2).sum() / 3
+        else:
+            # centre on a dot or exactly between dots: the solid is centrally
+            # symmetric, so opposite vertices then snap symmetrically and every
+            # pair of parallel edges stays exactly parallel and equal.
+            p = (v @ R.T)[:, :2] * s + np.round(off * 2) / 2
+            c, S = sc.cost(p, view_dir=R[2])
         return c + 0.003 * np.degrees(delta) ** 2, S
 
     def fit_frame(R0, axis, k, s, n, state=None, sig0=0.5):

@@ -78,8 +78,9 @@ def main():
             lo, hi = pts.min(0), pts.max(0)
             pts = pts + np.maximum(1 - lo, 0) - np.maximum(hi - [cols - 2, rows - 2], 0)
             shapes.append(dict(points=pts, edges=f["edges"]))
+            extra = f'  parallel-edge error {solids_v2.regularity(pts, f["edges"], f["name"]):.0f}'
             print(f'{f["name"]:13s} frame {k}  turn {f["angle"]:6.1f} deg  '
-                  f'cost {f["cost"]:.3f}')
+                  f'cost {f["cost"]:.3f}{extra}')
 
     svg = build_svg(cols, rows, pitch, ox, oy, shapes, args.colour, args.dot, args.line)
     with open(args.out + ".svg", "w") as fh:
