@@ -120,3 +120,55 @@ python make_poster_v3.py --only cube --frames 4 --rows 6 --extent 6.5 \
 This makes 24 exact regular cubes in 6 rows of 4. Each row is one cube turning
 in about 20° steps, and alternate rows turn in opposite directions. `--only`
 works with any solid, for example `--only dodecahedron --rows 5 --frames 3`.
+
+---
+
+## v4 "Inscribed": my own creative direction
+
+`python make_poster_v4.py` writes to `output/v4/`.
+
+**Form.** Instead of a grid of separate figures, v4 is one monumental object.
+The five Platonic solids sit exactly inside one another as a single rigid
+compound, and every link in the chain is exact:
+
+| outer | inner | how |
+|---|---|---|
+| dodecahedron | cube | the cube's 8 corners are 8 of the dodecahedron's 20 |
+| cube | tetrahedron | alternate corners of the cube |
+| tetrahedron | octahedron | the octahedron's corners are the tetrahedron's edge midpoints |
+| octahedron | icosahedron | the icosahedron's corners sit on the octahedron's edges, at the golden-ratio points |
+
+The innermost solid is still about 40 % the size of the outermost, so the
+nesting stays readable. It nods to Kepler's *Mysterium Cosmographicum*, where
+the Platonic solids nest between spheres.
+
+**Illusions, in layers:**
+1. **A sphere.** The dot grid is seen through a magnifying lens. Each dot is a
+   disc pushed through the same mapping as its position, so toward the rim the
+   dots foreshorten into ellipses, like discs printed on a globe (after
+   Vasarely's *Vega* series). The globe is the compound's circumscribing sphere.
+   The dots also shrink gently toward the page corners, so the globe rises out
+   of a receding field.
+2. **Two depth layers.** The tetrahedron is drawn in paper white. It is visible
+   only as cuts through the black dots, so your eye continues it across the
+   white paper as an illusory figure floating in front of the sheet: the
+   original Bradley & Petry mechanism. The other solids are in colour, seen
+   through the holes, so they sit behind the sheet. The dodecahedron and cube,
+   which share corners, form a cyan cage, and the octahedron and icosahedron
+   make a hot orange and magenta core. Line weight follows depth too: the white
+   layer is heaviest and the core finest.
+3. **Necker reversal.** The whole 90-edge compound is one exact orthographic
+   view, so it flips in depth as a single object. A tetrahedron corner is
+   rolled to point straight up, so the white pyramid can be read as seen from
+   above or from below.
+4. **No accidental views.** The view is searched so that no two corners nearly
+   coincide in 2D and no edge grazes a corner it doesn't belong to. The
+   compound's symmetry axes are kept well clear, and no face of the cube,
+   tetrahedron or octahedron is seen edge-on.
+
+The lines stay perfectly straight while the field bulges, which is what makes
+the solids float in front of the globe.
+
+Options: `--palette` (cage, ember-white, ember, cyan-white, spectrum),
+`--magnify`, `--profile` (lens shape), `--lens`, `--size`, `--vignette` and
+`--view`.
