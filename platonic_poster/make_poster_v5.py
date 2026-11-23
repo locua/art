@@ -63,6 +63,48 @@ def nest(depth):
     return out
 
 
+TRIPLE_TURNS = {"zz": (2, 2), "zx": (2, 0)}
+
+
+def triple(turns="zz"):
+    """Three nested Necker cubes. Each is the previous one turned 45 deg about
+    one of its own axes and scaled by 1/sqrt 2 -- the largest cube that fits
+    inside it in that orientation, so all 8 corners land exactly on the
+    faces of the cube around it.  "zz": both turns about the upright axis
+    (the inner cube is parallel to the outer one, the middle one sits
+    diagonally between); "zx": the second turn is about a horizontal axis.
+    Returns [(step, "N", -1, vertices, rotation)]."""
+    R = np.eye(3)
+    out = [(0, "N", -1, CUBE.copy(), R)]
+    for step, a in enumerate(TRIPLE_TURNS[turns], start=1):
+        R = R @ rot(a, np.pi / 4)               # turn about the cube's own axis
+        h = (1 / np.sqrt(2)) ** step
+        out.append((step, "N", -1, CUBE @ R.T * h, R))
+    return out
+
+
+def verify_triple(cubes):
+    for (s0, _, _, _, R0), (s1, _, _, V1, _) in zip(cubes, cubes[1:]):
+        h0 = (1 / np.sqrt(2)) ** s0
+        for p in V1:
+            q = np.abs(R0.T @ p / h0).max()
+            assert np.isclose(q, 1), "corner not on the outer cube's face"
+    return True
+
+
+def face_normals(cubes):
+    """Every cube's three face directions (= its edge directions)."""
+    ns = []
+    for c in cubes:
+        V = c[3]
+        for i, j in CUBE_EDGES:
+            d = V[j] - V[i]
+            d /= np.linalg.norm(d)
+            if not any(abs(d @ n) > 1 - 1e-9 for n in ns):
+                ns.append(d)
+    return np.array(ns)
+
+
 def _half_side_and_rot(kind, a, step):
     h = (1 / np.sqrt(2)) ** step
     return h, (rot(a, np.pi / 4) if kind == "C" else np.eye(3))
@@ -96,11 +138,13 @@ _fd = [np.array(v, float) / np.sqrt(2) for v in
        [(1, 1, 0), (1, -1, 0), (1, 0, 1), (1, 0, -1), (0, 1, 1), (0, 1, -1)]]
 SYM_AXES = np.array(_ax + _diag + _fd)
 FACE_NORMALS = np.array(_ax + _fd)        # normals of the axis-, and 45deg-turned faces
+_NORMALS = [FACE_NORMALS]                  # replaced per structure in main()
 
 
 def graph(cubes):
     pts, segs = [], []
-    for *_, V in cubes:
+    for c in cubes:
+        V = c[3]
         base = len(pts)
         pts.extend(V)
         segs.extend((base + i, base + j) for i, j in CUBE_EDGES)
@@ -110,7 +154,7 @@ def graph(cubes):
 def view_score(R, pts, segs, min_axis=14, min_tilt=12):
     v = R[2]
     flat = np.degrees(np.arccos(min(1.0, np.abs(SYM_AXES @ v).max())))
-    tilt = np.degrees(np.arcsin(min(1.0, np.abs(FACE_NORMALS @ v).min())))
+    tilt = np.degrees(np.arcsin(min(1.0, np.abs(_NORMALS[0] @ v).min())))
     if flat < min_axis or tilt < min_tilt:
         return -1.0, 0, 0, flat, tilt
     P = pts @ R[:2].T
@@ -172,11 +216,59 @@ def best_view(pts, segs, rng, tries=8000, lim=(12, 8), elev=None):
 # colour per step of the chain: outer compound cyan (seen through the holes,
 # behind the sheet); kernels in paper-white (visible only as cuts through the
 # dots -> illusory Necker cubes in front of the sheet); inner compound hot.
-def _search(pts, segs, seed, lim, elev):
+def _search(pts, segs, seed, lim, elev, normals):
+    _NORMALS[0] = normals                      # (worker processes)
     return best_view(pts, segs, np.random.default_rng(seed), tries=8000, lim=lim, elev=elev)
 
 
+def _greens():
+    """Green palette for the compound chain, built in OKLCH:
+      hue       <- which axis a cube is turned about (x chartreuse, z true green,
+                   y sea-green; z, the upright anchor, takes the middle hue).
+                   The same hue recurs at both scales: each cube's half-size
+                   twin is its colour match.
+      lightness <- depth of nesting: outer compound in saturated mid-greens,
+                   inner compound in lighter tints, glowing toward the core.
+                   The three axis greens also differ in lightness, so they
+                   stay distinct for red-green colour-blind viewers.
+      kernel    <- the OKLab mean of the three outer greens (it touches all
+                   three), lifted almost to white so it keeps its illusory,
+                   in-front-of-the-sheet quality.
+    """
+    from colours import from_oklch, max_chroma, hex_to_oklab, oklab_to_hex
+    H = [125, 168, 145]                     # axis 0 = x, 1 = y, 2 = z
+    Lo = [0.86, 0.80, 0.76]
+    Li = [0.92, 0.89, 0.85]
+    outer = [from_oklch(L, 0.92 * max_chroma(L, h), h) for L, h in zip(Lo, H)]
+    inner = [from_oklch(L, 0.90 * max_chroma(L, h), h) for L, h in zip(Li, H)]
+    mix = np.mean([hex_to_oklab(c) for c in outer], axis=0)
+    kernel = oklab_to_hex(np.array([0.965, mix[1] * 0.35, mix[2] * 0.35]))
+    return {"C": {0: outer, 2: inner, 4: inner}, "K": kernel}
+
+
+def _green_ramp(n=3):
+    """Three nested cubes: hue steps through the green family as each cube
+    turns 45 deg; lightness rises inward."""
+    from colours import from_oklch, max_chroma
+    Ls = np.linspace(0.74, 0.90, n)
+    Hs = np.linspace(128, 168, n)
+    return [from_oklch(L, 0.92 * max_chroma(L, h), h) for L, h in zip(Ls, Hs)]
+
+
+def _green_pair():
+    """Three nested cubes (turns "zz"): after two 45-degree turns the inner
+    cube is parallel to the outer one, so they share a hue (sea-green) and
+    differ only in lightness, brightening inward; the middle cube, the one
+    turned diagonally between them, takes the complementary chartreuse."""
+    from colours import from_oklch, max_chroma
+    spec = [(0.78, 165), (0.86, 122), (0.93, 165)]      # outer, middle, inner
+    return [from_oklch(L, 0.92 * max_chroma(L, h), h) for L, h in spec]
+
+
 PALETTES = {
+    "greens": _greens(),
+    "green-pair": _green_pair(),
+    "green-ramp": _green_ramp(),
     # compounds coloured by turning axis in the print primaries C / M / Y (the
     # same three colours recur at every scale), kernels in paper-white
     "cmy": {"C": ["#00c8ff", "#ff2bb8", "#ffe14d"], "K": "#ffffff"},
@@ -185,11 +277,16 @@ PALETTES = {
     "cyan-white": ["#00d2ff", "#ffffff", "#00d2ff", "#ffffff", "#00d2ff"],
 }
 WEIGHT = [1.0, 1.3, 0.85, 1.1, 0.75]   # per step; white kernels heaviest
+TRIPLE_WEIGHT = [1.25, 1.05, 0.9]      # outer cube boldest, inner finest
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--structure", default="compound", choices=["compound", "triple"],
+                    help="compound: Escher compound / kernel chain; triple: three nested cubes")
+    ap.add_argument("--turns", default="zz", choices=list(TRIPLE_TURNS),
+                    help="(triple) axes of the two 45-degree turns")
     ap.add_argument("--depth", type=int, default=3,
                     help="steps in the chain C, K, C, K ... (3 = C K C)")
     ap.add_argument("--palette", default="cmy", choices=PALETTES)
@@ -216,15 +313,21 @@ def main():
     args = ap.parse_args()
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
 
-    cubes = nest(args.depth)
-    verify(cubes)
+    if args.structure == "triple":
+        cubes = triple(args.turns)
+        verify_triple(cubes)
+    else:
+        cubes = nest(args.depth)
+        verify(cubes)
+    _NORMALS[0] = face_normals(cubes)
     pts, segs = graph(cubes)
     # search from several seeds in parallel, keep the cleanest view
     from multiprocessing import Pool
     lim = (args.min_axis, args.min_tilt)
     elev = tuple(args.elev) if args.elev else None
     with Pool() as pool:
-        Rs = pool.starmap(_search, [(pts, segs, args.seed * 100 + i, lim, elev) for i in range(4)])
+        Rs = pool.starmap(_search, [(pts, segs, args.seed * 100 + i, lim, elev, _NORMALS[0])
+                                    for i in range(4)])
     R = max(Rs, key=lambda R: view_score(R, pts, segs, *lim)[0])
     sc, gap, clear, flat, tilt = view_score(R, pts, segs, *lim)
     print(f"view: min corner gap {gap:.3f}, min clearance {clear:.3f}, "
@@ -248,25 +351,31 @@ def main():
 
     pal = PALETTES[args.palette]
     lines = []
-    for step, kind, axis, V in cubes:
+    weights = TRIPLE_WEIGHT if args.structure == "triple" else WEIGHT
+    for step, kind, axis, V, *_ in cubes:
         P = to_page(V @ R[:2].T)
         if isinstance(pal, dict):
-            colour = pal["C"][axis] if kind == "C" else pal["K"]
+            cmap = pal["C"]
+            if kind == "C":
+                colour = (cmap[step] if isinstance(cmap, dict) else cmap)[axis]
+            else:
+                colour = pal["K"]
         else:
-            colour = pal[step]
-        lines.append((colour, args.line * WEIGHT[step],
+            colour = pal[step % len(pal)]
+        lines.append((colour, args.line * weights[step],
                       [(P[i], P[j]) for i, j in CUBE_EDGES]))
 
-    sphere_r = np.sqrt(3) * k                  # circumsphere of the outer level
+    sphere_r = np.sqrt(3) * k                  # circumsphere of the outer cube(s)
     lens_r = min(args.lens * sphere_r, A2_W / 2 - 8)
     dots, pitch = dot_field(args.cols, centre, lens_r, args.magnify, args.r_out,
                             args.r_in, args.vignette, args.profile)
     print(f"{len(dots[0])} dots, {len(cubes)} cubes, figure {args.size:.0f} x {span[1] * k:.0f} mm")
 
+    title = "Three Nested Neckers" if args.structure == "triple" else "Nested Necker"
     svg = render_svg(dots, lines, args.line).replace("<title>Inscribed</title>",
-                                                     "<title>Nested Necker</title>")
+                                                     f"<title>{title}</title>")
     open(args.out + ".svg", "w").write(svg)
-    render_pdf(args.out + ".pdf", dots, lines, args.line, title="Nested Necker")
+    render_pdf(args.out + ".pdf", dots, lines, args.line, title=title)
     if not args.no_png:
         import cairosvg
         from PIL import Image

@@ -215,3 +215,39 @@ orthographic wireframe, so each one flips independently.
 `--depth 4` adds the next, tiny white kernel inside. It's tighter: the minimum
 clearance drops from 0.026 to 0.016. `--palette layers` colours by level
 instead (cyan, white, magenta).
+
+### v5 in greens (`output/v5_green/`)
+
+```bash
+python make_poster_v5.py --palette greens --out output/v5_green/nested_necker_green_A2
+```
+
+The greens are built in OKLCH (`colours.py`) so that each colour dimension
+encodes one relationship:
+
+| colour dimension | meaning |
+|---|---|
+| **hue** | which axis a cube is turned about: x is chartreuse `#b3e637`, z (the upright anchor) is true green `#33d34b`, y is sea-green `#38dcab` |
+| **lightness** | depth: the outer compound is in saturated mid-greens and the half-size compound in lighter tints of the *same* hues, so each cube's twin is its colour match |
+| **kernel** | `#dbffd9`, the OKLab average of the three outer greens (it touches all three), lifted almost to white so it keeps its illusory, in-front-of-the-sheet quality |
+
+The three axis greens also differ in lightness, so they stay distinct for
+red-green colour-blind viewers.
+
+### Three nested Neckers, in green (`output/v5_triple_green/`)
+
+```bash
+python make_poster_v5.py --structure triple --palette green-pair --size 255 \
+    --out output/v5_triple_green/three_neckers_green_A2
+```
+
+This uses just three cubes. Each one is the previous cube turned 45° about the
+upright axis and scaled by 1/√2, which is the largest cube that fits in that
+orientation. All 8 corners of each inner cube land exactly on the faces of the
+cube around it, and `verify_triple()` checks this. After two 45° turns the
+inner cube is parallel to the outer one. **The colours show that:** the outer
+and inner cubes share one sea-green hue and differ only in lightness
+(`#35d59f` → `#a8fdd8`). The middle cube, turned diagonally between them, takes
+the contrasting chartreuse `#bde437`. With so few edges, this view has four
+times the clearance of the compound, so each cube flips very cleanly.
+`--turns zx` makes the second turn about a horizontal axis instead.
