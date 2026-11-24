@@ -278,3 +278,41 @@ All four share one viewpoint, so they tend to flip in depth together. The
 nest then turns inside out: the innermost cube becomes the nearest.
 `--ratio 0.75` gives a gentler, more evenly stepped tunnel, and `--count`
 changes the number of cubes.
+
+---
+
+## v6 "Schröder": a reversible staircase
+
+`python make_poster_v6.py` writes to `output/v6/`.
+
+**Why it flips, exactly.** The stair profile starts and ends with a riser,
+with a floor strip leading in and a landing leading out. That makes it
+centrally symmetric, and the script asserts this. Its extrusion is therefore
+symmetric through its centre too. In a parallel view, reflecting the object
+through its centre is the same as turning the picture 180°, and reading the
+picture with depth reversed is the same as seeing the mirror-image object. So
+the reversed reading is *the same staircase upside down*. Stairs seen from
+above and an overhang seen from below are equally valid readings, which is
+what makes Schröder's figure so unstable.
+
+**Style, kept consistent with the series:**
+* Edges are coloured by 3D direction, using the same greens as the green
+  Nested Necker: treads, floor and landing (x) are chartreuse `#b3e637`,
+  depth edges (y) are sea-green `#38dcab`, and risers (z) are true green
+  `#33d34b`.
+* All lines have equal weight. Thinning lines with depth would favour one
+  reading.
+* The view is searched on the profile side, as in Schröder's drawing, with every
+  face at least 16° from edge-on and maximum clearance between corners and
+  unrelated edges.
+
+**Halftone relief (the creative licence).** Dots inside the stair's faces are
+resized by face orientation: tread dots shrink by 25 % and riser dots grow,
+capped so that no two dots ever touch (closest gap 1 mm). The staircase appears
+in the dot field itself, like a halftone print, even before you notice the
+lines. Shading implies a light from above, so it slightly favours the "stairs
+seen from above" reading. `schroder_pure_A2` (`--relief 0`) is the unshaded
+version, with maximum ambiguity.
+
+Options: `--steps`, `--width`, `--relief`, `--azim`/`--elev` (view ranges),
+`--size`, `--seed` and `--palette mono`.
