@@ -316,3 +316,44 @@ version, with maximum ambiguity.
 
 Options: `--steps`, `--width`, `--relief`, `--azim`/`--elev` (view ranges),
 `--size`, `--seed` and `--palette mono`.
+
+---
+
+## v7 "Tumbling Field": tumbling blocks and multistable dot lattices, combined
+
+`python make_poster_v7.py` writes to `output/v7/`.
+
+Two multistable effects, locked together exactly:
+
+1. **Tumbling blocks.** An isometric field of 143 cubes. Every hexagon reads as
+   a cube seen from above or from below, and regions of the field flip
+   independently.
+2. **A multistable dot lattice** (after Michael Kubovy). A hexagonal dot
+   lattice is the most ambiguous lattice possible: its three row directions
+   are equally strong, so the eye keeps regrouping the dots into rows along
+   one direction, then another.
+
+**The link:** the lattice's three row directions *are* the cubes' three edge
+directions. Every cube corner sits exactly on a dot centre, and every edge
+runs straight through a line of dot centres, with no approximation. This
+finally gives the "corners in the circles" ideal of v1 with zero distortion.
+Edges are coloured by direction with the series greens: x is chartreuse, y is
+sea-green and z is true green. When the eye groups the dots along one
+direction, that green comes forward.
+
+**Creative licence:**
+* **Three-tone halftone shading.** Dots inside each rhombus are sized by its
+  orientation: the flat diamonds are lightest and the right-leaning ones
+  darkest. A flat diamond is a top face in one reading and a bottom face in
+  the other, so the shading supports both readings, just as in the
+  traditional quilt.
+* **Dome or bowl?** The field is warped through the series' dot globe, and
+  corners stay exactly on dot centres because the dots and lines go through
+  the same mapping. Inside a 150 mm disc under the dome, every hexagon is split
+  the other way, so the cubes there are seen from *below*. The bulge says
+  "towards you" while the cubes say "from beneath", so the centre reads as a
+  dome or as a bowl. That's a third ambiguity on top of the other two.
+
+`tumbling_field_flat_A2` (`--inner-flip 0 --magnify 0`) is the pure, uniform
+field. Options include `--L` (cube edge, in dots), `--pitch`, `--relief`,
+`--inner-flip`, `--magnify` and `--lens`. The closest dot gap is 0.66 mm.
