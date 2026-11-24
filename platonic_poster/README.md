@@ -357,3 +357,39 @@ direction, that green comes forward.
 `tumbling_field_flat_A2` (`--inner-flip 0 --magnify 0`) is the pure, uniform
 field. Options include `--L` (cube edge, in dots), `--pitch`, `--relief`,
 `--inner-flip`, `--magnify` and `--lens`. The closest dot gap is 0.66 mm.
+
+---
+
+## v8 "Necker Tumbler": every tumbling block is a full Necker cube
+
+`python make_poster_v8.py` writes to `output/v8/`. The geometry is in
+`necker_field.py`.
+
+This is the Tumbling Field with each block drawn as a complete 12-edge
+wireframe, hidden edges included, so every cube carries both readings at once.
+
+* **No accidental view.** In the exact isometric view of v7, each cube's hidden
+  corner lands on its front corner, and the drawing collapses to a flat
+  asterisk. Here the cube edges are 7, 7 and 5 dots along the three lattice
+  directions. A true orthographic view of a cube on this lattice needs the
+  vertical edge to be 1/√2 of the others, and 5/7 is within 1 % of that, so
+  the cubes look regular. The hidden corner sits 2 dots above the front one.
+* **Still exact.** Every corner is on a dot centre and every edge runs through
+  a row of dot centres. No corner lies on or near an edge it doesn't belong
+  to: the minimum clearance is 1.7 dot spacings, and the script asserts zero
+  contacts.
+* **Every third cube.** Drawing every tumbling block as a transparent cube
+  merges neighbouring edges into continuous lines, so it reads as a grid rather
+  than as cubes. Instead the poster draws the index-3 sublattice, the classic
+  three-colouring of the tumbling-blocks tiling. In that pattern the cubes'
+  outlines touch but never overlap, and they sit in a honeycomb arrangement.
+* **Halftone by silhouette.** Dots inside a cube's outline grow and dots
+  between cubes shrink, so each cube shows as a dark hexagon without any face
+  being shaded (shading would favour one reading).
+* It uses the series dot globe and the same edge greens by direction. Only
+  cubes that fit entirely on the page are drawn (15 here). The closest dot gap
+  is 0.45 mm.
+
+Options: `--abc` (edge lengths in dots, e.g. `10 10 7`), `--pitch`,
+`--sub all` (draw every cube, as a dense line lattice), `--no-whole`,
+`--magnify` and `--overlap`.
