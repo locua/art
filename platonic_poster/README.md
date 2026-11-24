@@ -393,3 +393,58 @@ wireframe, hidden edges included, so every cube carries both readings at once.
 Options: `--abc` (edge lengths in dots, e.g. `10 10 7`), `--pitch`,
 `--sub all` (draw every cube, as a dense line lattice), `--no-whole`,
 `--magnify` and `--overlap`.
+
+---
+
+## v9 "Cleave": an occlusion-coupled Necker cube (a new construction)
+
+`python make_poster_v9.py` writes to `output/v9/`. Add `--control` for the
+comparison plate.
+
+**Construction.** The paper is treated as a plane cutting through the centre
+of a Necker cube:
+* Every part of every edge **nearer** than the cube's centre plane is drawn
+  only on the white paper, so it vanishes under the black dots.
+* Every part **further** than the centre plane is visible only inside the dots.
+* Each edge switches layer exactly where it crosses the centre plane.
+
+**Theory and prediction.** It combines three well-studied effects:
+1. **Occlusion sets depth order.** A line that stops exactly at a region's
+   boundary is read as passing *behind* that region, or as painted on the
+   region where it is visible (Nakayama's border ownership; Kanizsa's amodal
+   completion).
+2. **Figure–ground reversal** of the dot field. Black dots read as discs on a
+   white ground or as holes in a white sheet (Rubin). Coverage is set to 50 %
+   black so that neither reading dominates.
+3. **Necker reversal** of the undistorted cube.
+
+Together, the occlusion rules allow only two consistent combinations:
+
+| dot field reads as | inside-dot lines | paper lines | so the nearer half is |
+|---|---|---|---|
+| holes in a white sheet | behind the sheet | on the sheet | the paper half (reading 1) |
+| discs on a white ground | on the discs | behind the discs | the dot half (reading 2) |
+
+**Prediction:** two normally independent reversals become locked together.
+When the cube flips, the dots should switch between holes and discs, and
+vice versa. The control plate (`cleave_control_A2`) is the same cube with
+every edge seen through the dots, a plain Bradley & Petry figure. There,
+the dot field should stay "holes" whichever way the cube flips. Comparing the
+two plates shows whether the coupling happens for a given viewer. I'm not
+aware of a published version of this exact construction, but it combines
+established mechanisms, and whether the coupling is strong is an empirical
+question.
+
+**Design.**
+* Big Bradley & Petry-scale discs (18 across, 50 % coverage).
+* One mid green (`#1faf4b`) that is legible on both black and white, so each
+  edge reads as one continuous line across the two layers.
+* No dot globe: its bulge would add a competing depth cue.
+* The view is searched so that:
+  * every edge is at least 45 % visible in its own layer, with no near edge
+    hidden along a row of dots;
+  * 6 of the 8 corner junctions sit fully inside their layer (far corners in
+    a disc, near corners on the white);
+  * no corner lies near an edge it doesn't belong to.
+* Edges switch layer with butt ends, and corners get round joins, so no stray
+  cap marks appear.
