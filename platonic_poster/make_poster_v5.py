@@ -83,6 +83,25 @@ def triple(turns="zz"):
     return out
 
 
+def parallel(n=4, ratio=1 / np.sqrt(2)):
+    """n concentric cubes, all in the same orientation, each `ratio` times the
+    size of the one around it. With ratio 1/sqrt 2 (the default), cubes 1 and 3
+    are exactly the parallel outer/inner pair of the three-cube nest.
+    Returns [(step, "P", -1, vertices, rotation)]."""
+    return [(k, "P", -1, CUBE * ratio ** k, np.eye(3)) for k in range(n)]
+
+
+def verify_parallel(cubes):
+    """Each cube strictly inside the previous one, with a uniform gap on every
+    face, and all faces parallel (same orientation)."""
+    for (_, _, _, V0, R0), (_, _, _, V1, R1) in zip(cubes, cubes[1:]):
+        assert np.allclose(R0, R1), "not the same orientation"
+        h0, h1 = np.abs(V0).max(), np.abs(V1).max()
+        assert np.all(np.abs(V1) <= h0 - 1e-9), "inner cube not strictly inside"
+        assert np.isclose(np.abs(V1).max(axis=0), h1).all(), "gap not uniform"
+    return True
+
+
 def verify_triple(cubes):
     for (s0, _, _, _, R0), (s1, _, _, V1, _) in zip(cubes, cubes[1:]):
         h0 = (1 / np.sqrt(2)) ** s0
@@ -265,8 +284,20 @@ def _green_pair():
     return [from_oklch(L, 0.92 * max_chroma(L, h), h) for L, h in spec]
 
 
+def _green_depth(n=4):
+    """Concentric cubes in one orientation -> one family of green. Lightness
+    rises inward, so the core glows as if lit from inside, with a small hue
+    drift from green to sea-green. Chroma follows the gamut edge, so each
+    step is as vivid as the screen (and press) allow."""
+    from colours import from_oklch, max_chroma
+    Ls = np.linspace(0.70, 0.94, n)
+    Hs = np.linspace(148, 170, n)
+    return [from_oklch(L, 0.92 * max_chroma(L, h), h) for L, h in zip(Ls, Hs)]
+
+
 PALETTES = {
     "greens": _greens(),
+    "green-depth": _green_depth(),
     "green-pair": _green_pair(),
     "green-ramp": _green_ramp(),
     # compounds coloured by turning axis in the print primaries C / M / Y (the
@@ -278,13 +309,18 @@ PALETTES = {
 }
 WEIGHT = [1.0, 1.3, 0.85, 1.1, 0.75]   # per step; white kernels heaviest
 TRIPLE_WEIGHT = [1.25, 1.05, 0.9]      # outer cube boldest, inner finest
+PARALLEL_WEIGHT = [1.35, 1.12, 0.92, 0.75, 0.62, 0.52]   # thinner = further in
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--structure", default="compound", choices=["compound", "triple"],
-                    help="compound: Escher compound / kernel chain; triple: three nested cubes")
+    ap.add_argument("--structure", default="compound", choices=["compound", "triple", "parallel"],
+                    help="compound: Escher compound / kernel chain; triple: three nested cubes, "
+                         "each turned 45 deg; parallel: concentric cubes in one orientation")
+    ap.add_argument("--count", type=int, default=4, help="(parallel) number of cubes")
+    ap.add_argument("--ratio", type=float, default=1 / np.sqrt(2),
+                    help="(parallel) size of each cube relative to the one around it")
     ap.add_argument("--turns", default="zz", choices=list(TRIPLE_TURNS),
                     help="(triple) axes of the two 45-degree turns")
     ap.add_argument("--depth", type=int, default=3,
@@ -316,6 +352,9 @@ def main():
     if args.structure == "triple":
         cubes = triple(args.turns)
         verify_triple(cubes)
+    elif args.structure == "parallel":
+        cubes = parallel(args.count, args.ratio)
+        verify_parallel(cubes)
     else:
         cubes = nest(args.depth)
         verify(cubes)
@@ -351,7 +390,7 @@ def main():
 
     pal = PALETTES[args.palette]
     lines = []
-    weights = TRIPLE_WEIGHT if args.structure == "triple" else WEIGHT
+    weights = {"triple": TRIPLE_WEIGHT, "parallel": PARALLEL_WEIGHT}.get(args.structure, WEIGHT)
     for step, kind, axis, V, *_ in cubes:
         P = to_page(V @ R[:2].T)
         if isinstance(pal, dict):
@@ -371,7 +410,9 @@ def main():
                             args.r_in, args.vignette, args.profile)
     print(f"{len(dots[0])} dots, {len(cubes)} cubes, figure {args.size:.0f} x {span[1] * k:.0f} mm")
 
-    title = "Three Nested Neckers" if args.structure == "triple" else "Nested Necker"
+    title = {"triple": "Three Nested Neckers",
+             "parallel": f"{['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'][len(cubes)]} Nested Neckers"
+             }.get(args.structure, "Nested Necker")
     svg = render_svg(dots, lines, args.line).replace("<title>Inscribed</title>",
                                                      f"<title>{title}</title>")
     open(args.out + ".svg", "w").write(svg)

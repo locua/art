@@ -251,3 +251,30 @@ and inner cubes share one sea-green hue and differ only in lightness
 the contrasting chartreuse `#bde437`. With so few edges, this view has four
 times the clearance of the compound, so each cube flips very cleanly.
 `--turns zx` makes the second turn about a horizontal axis instead.
+
+### Four nested Neckers in one orientation, in green (`output/v5_four_green/`)
+
+```bash
+python make_poster_v5.py --structure parallel --palette green-depth --size 255 \
+    --out output/v5_four_green/four_neckers_green_A2
+```
+
+Four concentric cubes in exactly the same orientation. Each is 1/√2 the size
+of the one around it (sizes 1, 0.71, 0.5, 0.35), so cubes 1 and 3 are exactly
+the parallel outer and inner pair of the three-cube poster. `verify_parallel()`
+checks that every face is parallel and that each cube sits strictly inside,
+with an equal gap on all six sides.
+
+The "inside" feeling comes from three cues working together:
+
+* **Colour:** one family of green, because there is one orientation. Lightness
+  rises inward (`#2dbc55`, `#35d785`, `#3ef3af`, `#b4fee3`), so the core glows
+  as if lit from within.
+* **Weight:** the lines get thinner with each step inward, as if further away.
+* **Shrinking steps:** the gaps between the cubes get smaller toward the
+  centre, so it reads as a tunnel receding into the globe.
+
+All four share one viewpoint, so they tend to flip in depth together. The
+nest then turns inside out: the innermost cube becomes the nearest.
+`--ratio 0.75` gives a gentler, more evenly stepped tunnel, and `--count`
+changes the number of cubes.
